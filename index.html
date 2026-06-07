@@ -292,6 +292,28 @@
   .pop{animation:pop .35s ease both}
   .shake{animation:shake .45s ease both}
 
+
+  .quotientGrid{
+    display:inline-grid;
+    grid-template-columns:repeat(3, 1ch);
+    justify-content:start;
+    width:3ch;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Roboto Mono", monospace;
+    font-variant-numeric:tabular-nums;
+  }
+  .quotientGrid .qcell{
+    text-align:center;
+    line-height:1;
+  }
+  .quotientGrid .qfirst{
+    position:relative;
+  }
+  .quotientGrid .qfirst .qdot{
+    position:absolute;
+    right:-0.38ch;
+    bottom:0.02em;
+  }
+
   .insideGrid{
     display:inline-grid;
     grid-template-columns:repeat(3, 1ch);
@@ -490,10 +512,32 @@ function insideGrid(value){
     `</span>`;
 }
 
+function quotientGrid(value){
+  const raw = String(value ?? "");
+  if(raw.includes("<")){
+    return `<span class="quotientGrid"><span class="qcell">${raw}</span><span class="qcell"></span><span class="qcell"></span></span>`;
+  }
+
+  // 小数型：0. / 0.7 / 0.75 を、筆算の位取りに合わせる
+  if(raw.startsWith("0.")){
+    const dec = raw.slice(2);
+    const c1 = `<span class="qcell qfirst">0<span class="qdot">.</span></span>`;
+    const c2 = `<span class="qcell">${dec[0] ?? ""}</span>`;
+    const c3 = `<span class="qcell">${dec[1] ?? ""}</span>`;
+    return `<span class="quotientGrid">${c1}${c2}${c3}</span>`;
+  }
+
+  // その他：3桁グリッドに右寄せではなく、左から自然に置く
+  const s = raw.padEnd(3," ").slice(0,3);
+  return `<span class="quotientGrid">` +
+    [...s].map(ch => ch === " " ? '<span class="qcell"></span>' : `<span class="qcell">${ch}</span>`).join("") +
+    `</span>`;
+}
+
 function longDivision({divisor, inside, quotient="", lines=[]}){
   return `
     <div class="longdiv pop">
-      <div class="quotient">${quotient}</div>
+      <div class="quotient">${quotientGrid(quotient)}</div>
       <div class="work">
         <div class="divisor">${divisor}</div>
         <div class="inside">${insideGrid(inside)}</div>
