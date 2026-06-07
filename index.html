@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>うさぎ算数｜小数のわり算を見るアプリ</title>
+<style>
+  :root{
+    --bg:#fff7e8;
+    --card:#ffffff;
+    --ink:#2b2b2b;
+    --accent:#ff9f1c;
+    --accent2:#2ec4b6;
+    --danger:#e76f51;
+    --soft:#fff1c7;
+    --line:#333;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+    background:linear-gradient(180deg,#fffaf0,#fff3d8);
+    color:var(--ink);
+    touch-action:manipulation;
+  }
+  .app{
+    width:min(980px,100%);
+    margin:0 auto;
+    padding:18px 14px 28px;
+  }
+  header{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:12px;
+  }
+  h1{
+    font-size:clamp(22px,4vw,34px);
+    margin:0;
+    letter-spacing:.03em;
+  }
+  .sub{
+    font-size:14px;
+    opacity:.75;
+    margin-top:4px;
+  }
+  .topBtns{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  button{
+    border:0;
+    border-radius:16px;
+    padding:12px 18px;
+    font-weight:800;
+    font-size:17px;
+    background:var(--accent);
+    color:#fff;
+    box-shadow:0 5px 0 #c77500;
+    cursor:pointer;
+  }
+  button:active{transform:translateY(4px);box-shadow:0 1px 0 #c77500}
+  button.secondary{
+    background:#fff;
+    color:#333;
+    border:2px solid #ddd;
+    box-shadow:0 5px 0 #bbb;
+  }
+  button.secondary:active{box-shadow:0 1px 0 #bbb}
+  button.small{font-size:14px;padding:9px 12px;border-radius:12px}
+  .panel{
+    background:var(--card);
+    border:4px solid #ffe2a8;
+    border-radius:28px;
+    padding:16px;
+    box-shadow:0 10px 24px rgba(130,80,10,.12);
+  }
+  .selector{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:8px;
+    margin:12px 0 16px;
+  }
+  .qbtn{
+    background:#fff;
+    color:#333;
+    border:2px solid #ffd28a;
+    box-shadow:0 4px 0 #e8b76f;
+    padding:10px 6px;
+    font-size:14px;
+  }
+  .qbtn.active{
+    background:var(--accent2);
+    color:#fff;
+    border-color:var(--accent2);
+    box-shadow:0 4px 0 #158a80;
+  }
+  .stage{
+    display:grid;
+    grid-template-columns:1fr 250px;
+    gap:14px;
+    align-items:stretch;
+  }
+  .mathArea{
+    min-height:430px;
+    background:linear-gradient(180deg,#fff,#fffdf8);
+    border:3px solid #f4ddb4;
+    border-radius:24px;
+    padding:18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .rabbitArea{
+    min-height:430px;
+    background:#fff9eb;
+    border:3px solid #f4ddb4;
+    border-radius:24px;
+    padding:14px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .rabbit{
+    width:190px;
+    height:190px;
+    object-fit:contain;
+    image-rendering:auto;
+    filter:drop-shadow(0 8px 8px rgba(0,0,0,.12));
+    animation:pop .35s ease both;
+  }
+  .bubble{
+    width:100%;
+    background:#fff;
+    border:3px solid #333;
+    border-radius:20px;
+    padding:12px;
+    font-size:20px;
+    font-weight:800;
+    line-height:1.45;
+    position:relative;
+    min-height:120px;
+  }
+  .bubble:after{
+    content:"";
+    position:absolute;
+    bottom:-18px;
+    left:40px;
+    border-width:18px 12px 0 12px;
+    border-style:solid;
+    border-color:#333 transparent transparent transparent;
+  }
+  .bubble:before{
+    content:"";
+    position:absolute;
+    bottom:-12px;
+    left:43px;
+    border-width:14px 9px 0 9px;
+    border-style:solid;
+    border-color:#fff transparent transparent transparent;
+    z-index:1;
+  }
+  .problemTitle{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .badge{
+    background:#ffefc6;
+    border:2px solid #ffd28a;
+    border-radius:999px;
+    padding:6px 12px;
+    font-weight:800;
+  }
+  .formula{
+    font-size:clamp(32px,7vw,62px);
+    font-weight:900;
+    text-align:center;
+    margin:14px 0;
+    letter-spacing:.03em;
+  }
+  .hint{
+    text-align:center;
+    font-size:22px;
+    font-weight:800;
+    background:#f0fffb;
+    border:2px dashed var(--accent2);
+    border-radius:18px;
+    padding:10px;
+    margin:10px auto;
+    max-width:620px;
+  }
+  .longdiv{
+    width:min(520px,100%);
+    margin:18px auto 4px;
+    position:relative;
+    font-family:"Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
+    font-weight:900;
+  }
+  .quotient{
+    height:58px;
+    text-align:center;
+    font-size:48px;
+    letter-spacing:.08em;
+  }
+  .work{
+    display:grid;
+    grid-template-columns:112px 1fr;
+    align-items:start;
+  }
+  .divisor{
+    font-size:48px;
+    text-align:right;
+    padding-right:8px;
+    border-right:5px solid var(--line);
+    height:78px;
+    line-height:72px;
+  }
+  .inside{
+    font-size:54px;
+    padding-left:16px;
+    border-top:5px solid var(--line);
+    height:78px;
+    line-height:72px;
+  }
+  .calcLines{
+    margin-left:128px;
+    font-size:50px;
+    line-height:1.05;
+    width:190px;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Roboto Mono", monospace;
+    font-variant-numeric:tabular-nums;
+  }
+  .digitRow{
+    display:grid;
+    grid-template-columns:repeat(3, 1ch);
+    justify-content:start;
+    width:3ch;
+    line-height:1.05;
+  }
+  .digitRow .blank{
+    visibility:hidden;
+  }
+  .line{
+    border-top:4px solid var(--line);
+    width:3.15ch;
+    margin:4px 0 4px 0;
+  }
+  .emph{
+    display:inline-block;
+    background:#fff1a8;
+    border-radius:12px;
+    padding:0 6px;
+    animation:pulse .9s ease infinite alternate;
+  }
+  .moveDot{
+    display:inline-block;
+    color:var(--danger);
+    animation:slideDot .9s ease both;
+  }
+  .dropZero{
+    display:inline-block;
+    color:var(--accent2);
+    animation:drop .75s ease both;
+  }
+  .controls{
+    margin-top:14px;
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .progress{
+    margin:12px 0 0;
+    height:12px;
+    background:#ffe5ad;
+    border-radius:999px;
+    overflow:hidden;
+  }
+  .bar{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    transition:.35s;
+  }
+  .fade{animation:fade .35s ease both}
+  .pop{animation:pop .35s ease both}
+  .shake{animation:shake .45s ease both}
+  .answer{
+    text-align:center;
+    font-size:clamp(34px,7vw,66px);
+    font-weight:900;
+    color:#14877e;
+    margin-top:24px;
+  }
+  .mini{
+    font-size:16px;
+    opacity:.7;
+    text-align:center;
+    margin-top:8px;
+  }
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pop{0%{opacity:0;transform:scale(.7)}80%{transform:scale(1.05)}100%{opacity:1;transform:scale(1)}}
+  @keyframes pulse{from{transform:scale(1)}to{transform:scale(1.08)}}
+  @keyframes slideDot{from{transform:translateX(-38px);opacity:.2}to{transform:translateX(0);opacity:1}}
+  @keyframes drop{from{transform:translateY(-55px);opacity:.2}to{transform:translateY(0);opacity:1}}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-5px)}}
+  @media(max-width:760px){
+    .stage{grid-template-columns:1fr}
+    .rabbitArea{min-height:270px}
+    .rabbit{width:125px;height:125px}
+    .bubble{font-size:18px;min-height:95px}
+    .mathArea{min-height:390px}
+    .selector{grid-template-columns:repeat(2,1fr)}
+    .divisor{font-size:38px;width:90px}
+    .inside{font-size:44px}
+    .work{grid-template-columns:88px 1fr}
+    .calcLines{margin-left:104px;font-size:42px;width:150px}
+    .line{width:3.15ch}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>うさぎ算数｜小数のわり算</h1>
+      <div class="sub">「次へ」を押すだけ。見ているだけで、筆算の流れがわかる。</div>
+    </div>
+    <div class="topBtns">
+      <button class="secondary small" onclick="toggleSound()">音 ON/OFF</button>
+      <button class="secondary small" onclick="resetStep()">最初へ</button>
+    </div>
+  </header>
+
+  <div class="panel">
+    <div class="selector" id="selector"></div>
+
+    <div class="problemTitle">
+      <div class="badge" id="problemBadge">問題 1</div>
+      <div class="badge" id="stepBadge">STEP 1 / 8</div>
+    </div>
+
+    <div class="stage">
+      <main class="mathArea" id="mathArea"></main>
+      <aside class="rabbitArea">
+        <div class="bubble" id="bubble">いっしょに見ていこう！</div>
+        <img class="rabbit" id="rabbit" src="https://sumida-passion.github.io/usagivoca1-70/images/rabbit01.png" alt="うさぎ">
+      </aside>
+    </div>
+
+    <div class="progress"><div class="bar" id="bar"></div></div>
+
+    <div class="controls">
+      <button class="secondary" onclick="prevStep()">もどる</button>
+      <button onclick="nextStep()">次へ</button>
+      <button class="secondary" onclick="nextProblem()">次の問題へ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const IMG = [
+  "https://sumida-passion.github.io/usagivoca1-70/images/rabbit01.png",
+  "https://sumida-passion.github.io/usagivoca1-70/images/rabbit02.png",
+  "https://sumida-passion.github.io/usagivoca1-70/images/rabbit03.png",
+  "https://sumida-passion.github.io/usagivoca1-70/images/rabbit04.png",
+  "https://sumida-passion.github.io/usagivoca1-70/images/rabbit05.png",
+  "https://sumida-passion.github.io/usagivoca1-70/images/rabbit06.png"
+];
+
+const problems = [
+  {a:"4.8", b:"6.4", A:48, B:64, work:480, q1:7, m1:448, r1:32, work2:320, q2:5, m2:320, ans:"0.75"},
+  {a:"3.6", b:"4.8", A:36, B:48, work:360, q1:7, m1:336, r1:24, work2:240, q2:5, m2:240, ans:"0.75"},
+  {a:"2.4", b:"3.2", A:24, B:32, work:240, q1:7, m1:224, r1:16, work2:160, q2:5, m2:160, ans:"0.75"},
+  {a:"5.4", b:"7.2", A:54, B:72, work:540, q1:7, m1:504, r1:36, work2:360, q2:5, m2:360, ans:"0.75"},
+  {a:"1.8", b:"2.4", A:18, B:24, work:180, q1:7, m1:168, r1:12, work2:120, q2:5, m2:120, ans:"0.75"},
+
+  {a:"3.5", b:"7.0", A:35, B:70, work:350, q1:5, m1:350, r1:0, work2:null, q2:null, m2:null, ans:"0.5"},
+  {a:"2.8", b:"5.6", A:28, B:56, work:280, q1:5, m1:280, r1:0, work2:null, q2:null, m2:null, ans:"0.5"},
+  {a:"4.2", b:"5.6", A:42, B:56, work:420, q1:7, m1:392, r1:28, work2:280, q2:5, m2:280, ans:"0.75"},
+  {a:"6.3", b:"8.4", A:63, B:84, work:630, q1:7, m1:588, r1:42, work2:420, q2:5, m2:420, ans:"0.75"},
+  {a:"0.45", b:"0.6", A:45, B:60, work:450, q1:7, m1:420, r1:30, work2:300, q2:5, m2:300, ans:"0.75"}
+];
+
+let current = 0;
+let step = 0;
+let soundOn = true;
+
+function makeSelector(){
+  const sel=document.getElementById("selector");
+  sel.innerHTML="";
+  problems.forEach((p,i)=>{
+    const btn=document.createElement("button");
+    btn.className="qbtn"+(i===current?" active":"");
+    btn.textContent=`${i+1}. ${p.a}÷${p.b}`;
+    btn.onclick=()=>{current=i; step=0; render();};
+    sel.appendChild(btn);
+  });
+}
+
+function beep(type="tap"){
+  if(!soundOn) return;
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.frequency.value = type==="ok" ? 720 : type==="no" ? 160 : 440;
+  g.gain.setValueAtTime(.08, ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+.12);
+  o.start(); o.stop(ctx.currentTime+.13);
+}
+
+function toggleSound(){ soundOn=!soundOn; beep("tap"); }
+function nextStep(){ if(step<7){step++; beep(step===7?"ok":"tap"); render();} }
+function prevStep(){ if(step>0){step--; beep("tap"); render();} }
+function resetStep(){ step=0; beep("tap"); render(); }
+function nextProblem(){ current=(current+1)%problems.length; step=0; beep("ok"); render(); }
+
+function setRabbit(i){
+  const r=document.getElementById("rabbit");
+  r.src=IMG[i%IMG.length];
+  r.className="rabbit";
+  void r.offsetWidth;
+  r.className="rabbit pop";
+}
+
+function setBubble(text){
+  const b=document.getElementById("bubble");
+  b.innerHTML=text;
+  b.className="bubble";
+  void b.offsetWidth;
+  b.className="bubble fade";
+}
+
+
+function digitRow(value, cls=""){
+  const raw = String(value);
+  if(raw === "line") return '<div class="line"></div>';
+  const isHtml = raw.includes("<");
+  if(isHtml) return `<div class="digitRow ${cls}">${raw}</div>`;
+  const s = raw.padStart(3, " ");
+  return `<div class="digitRow ${cls}">` + 
+    [...s].map(ch => ch === " " ? '<span class="blank">0</span>' : `<span>${ch}</span>`).join("") + 
+    `</div>`;
+}
+
+function longDivision({divisor, inside, quotient="", lines=[]}){
+  return `
+    <div class="longdiv pop">
+      <div class="quotient">${quotient}</div>
+      <div class="work">
+        <div class="divisor">${divisor}</div>
+        <div class="inside">${inside}</div>
+      </div>
+      <div class="calcLines">
+        ${lines.map(x=>digitRow(x)).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function render(){
+  makeSelector();
+  const p=problems[current];
+  document.getElementById("problemBadge").textContent=`問題 ${current+1}`;
+  document.getElementById("stepBadge").textContent=`STEP ${step+1} / 8`;
+  document.getElementById("bar").style.width=`${((step+1)/8)*100}%`;
+
+  const area=document.getElementById("mathArea");
+  area.className="mathArea";
+  void area.offsetWidth;
+  area.className="mathArea fade";
+
+  const hasDecimalAnswer = String(p.ans).includes(".");
+  const needsZeroFirst = Number(p.A) < Number(p.B);
+
+  if(step===0){
+    setRabbit(0);
+    setBubble(`今日の問題は<br><b>${p.a} ÷ ${p.b}</b> だよ。`);
+    area.innerHTML=`
+      <div class="formula">${p.a} ÷ ${p.b}</div>
+      <div class="hint">小数のわり算を、筆算で見ていこう。</div>
+    `;
+  }
+
+  if(step===1){
+    setRabbit(1);
+    setBubble(`小数点をそろえて動かすよ。<br>わられる数も、わる数も同じだけ動かす！`);
+    area.innerHTML=`
+      <div class="formula">
+        ${p.a.replace(".",'<span class="moveDot">.</span>')} ÷ ${p.b.replace(".",'<span class="moveDot">.</span>')}
+      </div>
+      <div class="hint">両方を同じだけ10倍・100倍するから、答えは変わらない。</div>
+    `;
+  }
+
+  if(step===2){
+    setRabbit(2);
+    setBubble(`小数点がなくなったね。<br><b>${p.A} ÷ ${p.B}</b> として考えよう。`);
+    area.innerHTML=`
+      <div class="formula">${p.A} ÷ ${p.B}</div>
+      <div class="hint">小数を整数のわり算に変身させたよ。</div>
+      ${longDivision({divisor:p.B, inside:p.A})}
+    `;
+  }
+
+  if(step===3){
+    setRabbit(needsZeroFirst ? 3 : 1);
+    if(needsZeroFirst){
+      setBubble(`<b>${p.A}</b> の中には <b>${p.B}</b> は1つもないよね。<br>だから、<b>0</b> を置くんだよ。`);
+      area.innerHTML=`
+        ${longDivision({divisor:p.B, inside:p.A, quotient:'<span class="emph">0.</span>'})}
+        <div class="hint">0を書いたのは、「整数部分は0」という意味。</div>
+      `;
+    }else{
+      setBubble(`<b>${p.A}</b> の中に <b>${p.B}</b> は何回入るかな？`);
+      area.innerHTML=`
+        ${longDivision({divisor:p.B, inside:p.A, quotient:'?'})}
+        <div class="hint">ここで、わる数が何回入るかを考える。</div>
+      `;
+    }
+  }
+
+  if(step===4){
+    setRabbit(4);
+    if(needsZeroFirst){
+      setBubble(`まだ終わりじゃないよ。<br>0を下ろして、<b>${p.work}</b> にするよ。`);
+      area.innerHTML=`
+        ${longDivision({divisor:p.B, inside:`${p.A}<span class="dropZero">0</span>`, quotient:'0.'})}
+        <div class="hint">${p.work} の中には ${p.B} が入りそう！</div>
+      `;
+    }else{
+      setBubble(`<b>${p.B} × ${p.q1} = ${p.m1}</b><br>ぴったり入るかな？`);
+      area.innerHTML=`
+        ${longDivision({divisor:p.B, inside:p.A, quotient:p.q1, lines:[p.m1]})}
+        <div class="hint">${p.B}を${p.q1}回分、下に書くよ。</div>
+      `;
+    }
+  }
+
+  if(step===5){
+    setRabbit(5);
+    if(needsZeroFirst){
+      setBubble(`<b>${p.B} × ${p.q1} = ${p.m1}</b><br>だから、小数第一位は <b>${p.q1}</b> だね。`);
+      area.innerHTML=`
+        ${longDivision({divisor:p.B, inside:p.A+"0", quotient:`0.${p.q1}`, lines:[p.m1]})}
+        <div class="hint">${p.work} から ${p.m1} をひくよ。</div>
+      `;
+    }else{
+      setBubble(`ひき算すると、あまりは <b>${p.r1}</b>。`);
+      area.innerHTML=`
+        ${longDivision({divisor:p.B, inside:p.A, quotient:p.q1, lines:[p.m1,"line",p.r1]})}
+        <div class="hint">あまりが0なら、ここでぴったり。</div>
+      `;
+    }
+  }
+
+  if(step===6){
+    setRabbit(needsZeroFirst ? 1 : 5);
+    if(needsZeroFirst){
+      if(p.r1 === 0 || p.work2 === null){
+        setBubble(`${p.work} − ${p.m1} = <b>0</b><br>ぴったり割り切れたね。`);
+        area.innerHTML=`
+          ${longDivision({divisor:p.B, inside:p.A+"0", quotient:`0.${p.q1}`, lines:[p.m1,"line","0"]})}
+          <div class="hint">あまりが0。答えは 0.${p.q1} だよ。</div>
+        `;
+      }else{
+        setBubble(`${p.work} − ${p.m1} = <b>${p.r1}</b><br>あまりが出たね。`);
+        area.innerHTML=`
+          ${longDivision({divisor:p.B, inside:p.A+"0", quotient:`0.${p.q1}`, lines:[p.m1,"line",p.r1]})}
+          <div class="hint">まだ続けられる。0をもう1つ下ろそう。</div>
+        `;
+      }
+    }else{
+      setBubble(`答えは <b>${p.ans}</b>。<br>小数点を動かしても、答えは変わらないよ。`);
+      area.innerHTML=`
+        ${longDivision({divisor:p.B, inside:p.A, quotient:p.ans, lines:[p.m1,"line",p.r1]})}
+        <div class="answer">${p.a} ÷ ${p.b} = ${p.ans}</div>
+      `;
+    }
+  }
+
+  if(step===7){
+    setRabbit(0);
+    if(needsZeroFirst){
+      if(p.r1 === 0 || p.work2 === null){
+        setBubble(`<b>${p.work}</b> の中に <b>${p.B}</b> は <b>${p.q1}</b> 回。<br><b>${p.B} × ${p.q1} = ${p.m1}</b><br>ぴったりだから、答えは <b>${p.ans}</b>！`);
+        area.innerHTML=`
+          ${longDivision({divisor:p.B, inside:p.A+"0", quotient:`0.${p.q1}`, lines:[p.m1,"line","0"]})}
+          <div class="answer">${p.a} ÷ ${p.b} = ${p.ans}</div>
+          <div class="mini">最初に0を書くから、答えは0から始まる。</div>
+        `;
+      }else{
+        setBubble(`まず、あまりの <b>${p.r1}</b> を見るよ。<br>そこに <b>0を下ろす</b> と、<b>${p.work2}</b> になる！<br><b>${p.B} × ${p.q2} = ${p.m2}</b> だから答えは <b>${p.ans}</b>！`);
+        area.innerHTML=`
+          ${longDivision({divisor:p.B, inside:p.A+"0", quotient:`0.${p.q1}${p.q2}`, lines:[p.m1,"line",p.r1,`<span class="blank">0</span><span class="blank">0</span><span class="dropZero">0</span>`,`<span>${String(p.work2)[0]}</span><span>${String(p.work2)[1]}</span><span class="emph">${String(p.work2)[2]}</span>`,p.m2,"line","0"]})}
+          <div class="answer">${p.a} ÷ ${p.b} = ${p.ans}</div>
+          <div class="mini">0を書いたあとも、0を下ろせば計算を続けられる。</div>
+        `;
+      }
+    }else{
+      setBubble(`よくできました！<br>次の問題も、同じ流れで見てみよう。`);
+      area.innerHTML=`
+        ${longDivision({divisor:p.B, inside:p.A, quotient:p.ans, lines:[p.m1,"line",p.r1]})}
+        <div class="answer">${p.a} ÷ ${p.b} = ${p.ans}</div>
+      `;
+    }
+  }
+}
+
+render();
+</script>
+</body>
+</html>
