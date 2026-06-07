@@ -291,6 +291,16 @@
   .fade{animation:fade .35s ease both}
   .pop{animation:pop .35s ease both}
   .shake{animation:shake .45s ease both}
+
+  .insideGrid{
+    display:inline-grid;
+    grid-template-columns:repeat(3, 1ch);
+    justify-content:start;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Roboto Mono", monospace;
+    font-variant-numeric:tabular-nums;
+  }
+  .insideGrid .blank{visibility:hidden;}
+
   .answer{
     text-align:center;
     font-size:clamp(34px,7vw,66px);
@@ -404,23 +414,42 @@ function makeSelector(){
   });
 }
 
+let audioCtx = null;
 function beep(type="tap"){
   if(!soundOn) return;
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const o = ctx.createOscillator();
-  const g = ctx.createGain();
-  o.connect(g); g.connect(ctx.destination);
-  o.frequency.value = type==="ok" ? 720 : type==="no" ? 160 : 440;
-  g.gain.setValueAtTime(.08, ctx.currentTime);
-  g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+.12);
-  o.start(); o.stop(ctx.currentTime+.13);
+  try{
+    if(!audioCtx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return;
+      audioCtx = new AC();
+    }
+    if(audioCtx.state === "suspended") audioCtx.resume();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value = type==="ok" ? 720 : type==="no" ? 160 : 440;
+    g.gain.setValueAtTime(.05, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime+.10);
+    o.start(); o.stop(audioCtx.currentTime+.11);
+  }catch(e){
+    // 古いiPad等で音が原因で止まらないよう、音だけ無効化する
+    soundOn = false;
+  }
 }
 
 function toggleSound(){ soundOn=!soundOn; beep("tap"); }
-function nextStep(){ if(step<7){step++; beep(step===7?"ok":"tap"); render();} }
-function prevStep(){ if(step>0){step--; beep("tap"); render();} }
-function resetStep(){ step=0; beep("tap"); render(); }
-function nextProblem(){ current=(current+1)%problems.length; step=0; beep("ok"); render(); }
+function safeRender(){
+  try{ render(); }
+  catch(e){
+    console.error(e);
+    soundOn = false;
+    document.getElementById("bubble").innerHTML = "ごめん、表示を立て直すね。<br>もう一度「最初へ」を押してね。";
+  }
+}
+function nextStep(){ if(step<7){step++; beep(step===7?"ok":"tap"); safeRender();} }
+function prevStep(){ if(step>0){step--; beep("tap"); safeRender();} }
+function resetStep(){ step=0; beep("tap"); safeRender(); }
+function nextProblem(){ current=(current+1)%problems.length; step=0; beep("ok"); safeRender(); }
 
 function setRabbit(i){
   const r=document.getElementById("rabbit");
@@ -450,13 +479,24 @@ function digitRow(value, cls=""){
     `</div>`;
 }
 
+function insideGrid(value){
+  const raw = String(value);
+  if(raw.includes("<")){
+    return `<span class="insideGrid">${raw}</span>`;
+  }
+  const s = raw.padStart(3, " ");
+  return `<span class="insideGrid">` +
+    [...s].map(ch => ch === " " ? '<span class="blank">0</span>' : `<span>${ch}</span>`).join("") +
+    `</span>`;
+}
+
 function longDivision({divisor, inside, quotient="", lines=[]}){
   return `
     <div class="longdiv pop">
       <div class="quotient">${quotient}</div>
       <div class="work">
         <div class="divisor">${divisor}</div>
-        <div class="inside">${inside}</div>
+        <div class="inside">${insideGrid(inside)}</div>
       </div>
       <div class="calcLines">
         ${lines.map(x=>digitRow(x)).join("")}
@@ -532,7 +572,7 @@ function render(){
     if(needsZeroFirst){
       setBubble(`まだ終わりじゃないよ。<br>0を下ろして、<b>${p.work}</b> にするよ。`);
       area.innerHTML=`
-        ${longDivision({divisor:p.B, inside:`${p.A}<span class="dropZero">0</span>`, quotient:'0.'})}
+        ${longDivision({divisor:p.B, inside:`<span>${String(p.work)[0]}</span><span>${String(p.work)[1]}</span><span class="dropZero">${String(p.work)[2]}</span>`, quotient:'0.'})}
         <div class="hint">${p.work} の中には ${p.B} が入りそう！</div>
       `;
     }else{
